@@ -70,6 +70,13 @@ window.ENV = {
 // Debug: Log de variables cargadas
 console.log('Variables de entorno cargadas en env-config.js');
 
+// Debug para ver si las variables se están reemplazando
+console.log('Estado de ENV al cargar env-config.js:', {
+  url_contains_placeholder: window.ENV.NEXT_PUBLIC_SUPABASE_URL.includes('{{'),
+  key_contains_placeholder: window.ENV.NEXT_PUBLIC_SUPABASE_ANON_KEY.includes('{{'),
+  service_key_contains_placeholder: window.ENV.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY.includes('{{')
+});
+
 // Función para verificar si una variable tiene un valor válido (no es un placeholder)
 function isValidValue(value) {
   return value && typeof value === 'string' && !value.includes('{{') && !value.includes('}}');

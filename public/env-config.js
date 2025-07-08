@@ -5,6 +5,13 @@ window.ENV = {
   NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY: '{{ NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY }}'
 };
 
+// Debug para ver si las variables se están reemplazando
+console.log('Estado de ENV al cargar env-config.js:', {
+  url_contains_placeholder: window.ENV.NEXT_PUBLIC_SUPABASE_URL.includes('{{'),
+  key_contains_placeholder: window.ENV.NEXT_PUBLIC_SUPABASE_ANON_KEY.includes('{{'),
+  service_key_contains_placeholder: window.ENV.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY.includes('{{')
+});
+
 // Función para verificar si un valor de variable es válido (no contiene placeholders)
 function isValidEnvValue(value) {
   return value && typeof value === 'string' && !value.includes('{{') && !value.includes('}}');

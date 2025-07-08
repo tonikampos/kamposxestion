@@ -73,6 +73,10 @@
   </style>
   <script src="https://unpkg.com/@supabase/supabase-js@2.50.3"></script>
   <script src="/env-config.js"></script>
+  <script>
+    // Definir el objeto supabase global
+    window.supabaseLib = window.supabase;
+  </script>
 </head>
 <body>
   <h1>Depuración de Supabase - KamposXestion</h1>
@@ -180,10 +184,10 @@
         showMessage('connection-results', `<p>Usando: URL=${supabaseUrl.substring(0, 20)}...</p>`);
         
         // Crear cliente de Supabase
-        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+        const supabaseClient = window.supabaseLib.createClient(supabaseUrl, supabaseKey);
         
         // Hacer una consulta simple
-        const { data, error } = await supabase.from('profiles').select('count', { count: 'exact', head: true });
+        const { data, error } = await supabaseClient.from('profiles').select('count', { count: 'exact', head: true });
         
         if (error) {
           showMessage('connection-results', `<p>Error ao conectar con Supabase: ${error.message}</p>`, 'error');
@@ -214,10 +218,10 @@
         }
 
         // Crear cliente de Supabase
-        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+        const supabaseClient = window.supabaseLib.createClient(supabaseUrl, supabaseKey);
         
         // Comprobar si hay una sesión activa
-        const { data, error } = await supabase.auth.getSession();
+        const { data, error } = await supabaseClient.auth.getSession();
         
         if (error) {
           showMessage('auth-results', `<p>Error ao acceder ao servizo de autenticación: ${error.message}</p>`, 'error');

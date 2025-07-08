@@ -19,10 +19,29 @@ export const registerUser = async (
   try {
     console.log('Iniciando rexistro de usuario:', { email, fullName });
     
+    // Verificar si las variables de entorno están configuradas correctamente
+    const envVars = {
+      url: typeof window !== 'undefined' ? localStorage.getItem('NEXT_PUBLIC_SUPABASE_URL') : null,
+      key: typeof window !== 'undefined' ? localStorage.getItem('NEXT_PUBLIC_SUPABASE_ANON_KEY') : null,
+      serviceKey: typeof window !== 'undefined' ? localStorage.getItem('NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY') : null,
+    };
+    
+    console.log('Variables disponibles para registro:', {
+      url_available: Boolean(envVars.url),
+      key_available: Boolean(envVars.key),
+      serviceKey_available: Boolean(envVars.serviceKey)
+    });
+    
     // Usamos o cliente con rol de servizo para todo o proceso
     const serviceClient = getServiceSupabase();
     
+    // Verificamos si el cliente tiene la función admin.createUser
+    if (!serviceClient.auth.admin || typeof serviceClient.auth.admin.createUser !== 'function') {
+      throw new Error('O cliente de Supabase non ten permisos de administrador. Comproba que a variable NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY estea configurada correctamente en Netlify.');
+    }
+    
     // Paso 1: Crear o usuario en Auth
+    console.log('Intentando crear usuario con admin.createUser...');
     const { data: authData, error: authError } = await serviceClient.auth.admin.createUser({
       email: email,
       password: password,
