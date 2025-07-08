@@ -27,7 +27,10 @@ export default function RootLayout({
   return (
     <html lang="gl">
       <head>
-        {/* Agregar script para cargar las variables de entorno desde window.ENV si está disponible */}
+        {/* Script externo para cargar variables de entorno */}
+        <script src="/env-config.js"></script>
+        
+        {/* Script para cargar variables de entorno desde diferentes fuentes */}
         <script dangerouslySetInnerHTML={{ __html: `
           // Este script carga las variables de entorno desde window.ENV (definido en env-config.js)
           // y las hace disponibles para la aplicación
@@ -37,12 +40,12 @@ export default function RootLayout({
                 Object.keys(window.ENV).forEach(key => {
                   if (window.ENV[key] && !window.ENV[key].includes('{{')) {
                     localStorage.setItem(key, window.ENV[key]);
-                    console.log('Configured env var:', key);
+                    console.log('Configurada variable de entorno:', key);
                   }
                 });
               }
             } catch(e) {
-              console.error('Error loading environment variables:', e);
+              console.error('Error cargando variables de entorno:', e);
             }
           })();
         ` }} />
@@ -54,6 +57,22 @@ export default function RootLayout({
           {children}
           <Toaster position="top-right" />
         </AuthProvider>
+
+        {/* Script para verificar que las variables se han cargado correctamente */}
+        <script dangerouslySetInnerHTML={{ __html: `
+          setTimeout(function() {
+            try {
+              const url = localStorage.getItem('NEXT_PUBLIC_SUPABASE_URL');
+              const key = localStorage.getItem('NEXT_PUBLIC_SUPABASE_ANON_KEY');
+              console.log('Variables de entorno disponibles:',
+                'URL=' + (url ? url.substring(0, 15) + '...' : 'non definida'),
+                'KEY=' + (key ? 'definida (' + key.length + ' caracteres)' : 'non definida')
+              );
+            } catch(e) {
+              console.error('Error verificando variables de entorno:', e);
+            }
+          }, 1000);
+        ` }} />
       </body>
     </html>
   );

@@ -52,8 +52,44 @@ const copyConfigFiles = () => {
 // Este archivo se genera durante el build y es reemplazado en tiempo de despliegue por Netlify
 window.ENV = {
   NEXT_PUBLIC_SUPABASE_URL: '{{ NEXT_PUBLIC_SUPABASE_URL }}',
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: '{{ NEXT_PUBLIC_SUPABASE_ANON_KEY }}'
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: '{{ NEXT_PUBLIC_SUPABASE_ANON_KEY }}',
+  NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY: '{{ NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY }}'
 };
+
+// Debug: Log de variables cargadas
+console.log('Variables de entorno cargadas en env-config.js');
+
+// Función para verificar si una variable tiene un valor válido (no es un placeholder)
+function isValidValue(value) {
+  return value && typeof value === 'string' && !value.includes('{{') && !value.includes('}}');
+}
+
+// Intenta cargar las variables de entorno desde diferentes fuentes en orden de prioridad
+(function() {
+  try {
+    // 1. Variables inyectadas por Netlify en tiempo de despliegue
+    if (isValidValue(window.ENV.NEXT_PUBLIC_SUPABASE_URL) && isValidValue(window.ENV.NEXT_PUBLIC_SUPABASE_ANON_KEY)) {
+      Object.keys(window.ENV).forEach(key => {
+        if (isValidValue(window.ENV[key])) {
+          localStorage.setItem(key, window.ENV[key]);
+          console.log('Variable cargada desde Netlify:', key);
+        }
+      });
+    } else {
+      console.log('Variables de Netlify no disponibles o inválidas');
+      
+      // 2. Variables hardcoded para debug (solo en caso de que no haya variables de entorno configuradas)
+      const storedUrl = localStorage.getItem('NEXT_PUBLIC_SUPABASE_URL');
+      const storedKey = localStorage.getItem('NEXT_PUBLIC_SUPABASE_ANON_KEY');
+      
+      if (!storedUrl || !storedKey) {
+        console.warn('ATENCIÓN: Usando variables de entorno por defecto - Isto debería verse só en desenvolvemento');
+      }
+    }
+  } catch (error) {
+    console.error('Error ao cargar variables de entorno:', error);
+  }
+})();
 `;
     fs.writeFileSync(path.join(outDir, 'env-config.js'), envConfigJs);
     console.log('Successfully created env-config.js in output directory');
