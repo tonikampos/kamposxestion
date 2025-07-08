@@ -1,3 +1,7 @@
+# Cargar la página de configuración inicial
+/ /config.html 200
+
+# Redirecciones estándar para SPA
 /* /index.html 200
 /auth/* /auth/login/index.html 200
 /dashboard/* /dashboard/index.html 200

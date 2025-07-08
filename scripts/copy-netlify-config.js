@@ -22,6 +22,17 @@ const copyConfigFiles = () => {
   } catch (error) {
     console.error('Error copying _redirects file:', error);
   }
+
+  // Copia config.html
+  try {
+    fs.copyFileSync(
+      path.join(__dirname, '..', 'public', 'config.html'),
+      path.join(outDir, 'config.html')
+    );
+    console.log('Successfully copied config.html to output directory');
+  } catch (error) {
+    console.error('Error copying config.html file:', error);
+  }
   
   // Crear un archivo netlify.toml en la carpeta de salida
   try {
@@ -33,6 +44,21 @@ const copyConfigFiles = () => {
     console.log('Successfully copied netlify.toml to output directory');
   } catch (error) {
     console.error('Error copying netlify.toml file:', error);
+  }
+  
+  // Crear un archivo env-config.js que será cargado por la aplicación
+  try {
+    const envConfigJs = `
+// Este archivo se genera durante el build y es reemplazado en tiempo de despliegue por Netlify
+window.ENV = {
+  NEXT_PUBLIC_SUPABASE_URL: '{{ NEXT_PUBLIC_SUPABASE_URL }}',
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: '{{ NEXT_PUBLIC_SUPABASE_ANON_KEY }}'
+};
+`;
+    fs.writeFileSync(path.join(outDir, 'env-config.js'), envConfigJs);
+    console.log('Successfully created env-config.js in output directory');
+  } catch (error) {
+    console.error('Error creating env-config.js file:', error);
   }
   
   // Añadir el archivo 404.html que apunta a la página personalizada
@@ -96,6 +122,24 @@ const copyConfigFiles = () => {
     console.log('Successfully created 404.html in output directory');
   } catch (error) {
     console.error('Error creating 404.html file:', error);
+  }
+  
+  // Modificar los archivos HTML para incluir el archivo de configuración
+  try {
+    const htmlFiles = fs.readdirSync(outDir).filter(file => file.endsWith('.html'));
+    htmlFiles.forEach(file => {
+      const htmlPath = path.join(outDir, file);
+      let htmlContent = fs.readFileSync(htmlPath, 'utf8');
+      
+      // Añadir el script de configuración de variables de entorno
+      if (!htmlContent.includes('env-config.js')) {
+        htmlContent = htmlContent.replace('</head>', '<script src="/env-config.js"></script></head>');
+        fs.writeFileSync(htmlPath, htmlContent);
+      }
+    });
+    console.log('Successfully added env-config.js to all HTML files');
+  } catch (error) {
+    console.error('Error modifying HTML files:', error);
   }
 };
 

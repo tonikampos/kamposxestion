@@ -2,6 +2,22 @@
 
 Esta guía explica como despregar KamposXestion en Netlify e asegurar a correcta conexión coa base de datos de Supabase.
 
+## ⚠️ SOLUCIÓN PARA PROBLEMAS DE VARIABLES DE ENTORNO ⚠️
+
+Para resolver o problema das variables de entorno en Netlify, sigue estes pasos:
+
+1. **Engade as variables de entorno en Netlify:**
+   - Accede ao panel de Netlify
+   - Vai a **Site settings** > **Build & deploy** > **Environment**
+   - Engade as seguintes variables:
+     - `NEXT_PUBLIC_SUPABASE_URL`: A URL do teu proxecto Supabase
+     - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: A clave anónima do teu proxecto Supabase
+     - `NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY`: A clave de servizo (opcional)
+
+2. **Activa a sustitución de variables:**
+   - En **Build & deploy** > **Post processing** > **Asset optimization**
+   - Asegúrate de que a opción **Enable variable substitution in HTML files** está activada
+
 ## Pasos para despregar en Netlify
 
 ### 1. Acceder a Netlify

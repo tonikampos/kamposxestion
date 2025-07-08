@@ -1,29 +1,41 @@
-﻿'use client';
+﻿// Versión estática para a exportación, sen código cliente que cause problemas na compilación
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth/auth-context';
+import Link from 'next/link';
 
 export default function Home() {
-  const router = useRouter();
-  const { user, isLoading } = useAuth();
-
-  useEffect(() => {
-    if (!isLoading) {
-      // Redireccionar ao dashboard se o usuario está autenticado
-      if (user) {
-        router.push('/dashboard');
-      } else {
-        // Redireccionar ao login se o usuario non está autenticado
-        router.push('/auth/login');
-      }
-    }
-  }, [user, isLoading, router]);
-
-  // Amosar un indicador de carga mentres se verifica a autenticación
+  // Esta páxina é estática para a exportación
+  // No cliente, o script redireccionará ao usuario á páxina adecuada
+  
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    <div className="min-h-screen flex items-center justify-center flex-col">
+      <h1 className="text-4xl font-bold mb-8">KamposXestion</h1>
+      
+      <div className="space-y-4">
+        <Link 
+          href="/auth/login" 
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md block text-center"
+        >
+          Iniciar sesión
+        </Link>
+        
+        <Link 
+          href="/auth/register" 
+          className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-md block text-center"
+        >
+          Rexistrarse
+        </Link>
+      </div>
+      
+      {/* Script que se executará no cliente para redirixir se hai sesión */}
+      <script dangerouslySetInnerHTML={{ __html: `
+        document.addEventListener('DOMContentLoaded', function() {
+          // Intentar redireccionar según o estado de autenticación
+          const hasSession = localStorage.getItem('supabase.auth.token');
+          if (hasSession) {
+            window.location.href = '/dashboard';
+          }
+        });
+      `}} />
     </div>
   );
 }

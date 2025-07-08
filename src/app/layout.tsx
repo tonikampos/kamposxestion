@@ -26,6 +26,27 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="gl">
+      <head>
+        {/* Agregar script para cargar las variables de entorno desde window.ENV si está disponible */}
+        <script dangerouslySetInnerHTML={{ __html: `
+          // Este script carga las variables de entorno desde window.ENV (definido en env-config.js)
+          // y las hace disponibles para la aplicación
+          (function() {
+            try {
+              if (typeof window !== 'undefined' && window.ENV) {
+                Object.keys(window.ENV).forEach(key => {
+                  if (window.ENV[key] && !window.ENV[key].includes('{{')) {
+                    localStorage.setItem(key, window.ENV[key]);
+                    console.log('Configured env var:', key);
+                  }
+                });
+              }
+            } catch(e) {
+              console.error('Error loading environment variables:', e);
+            }
+          })();
+        ` }} />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="gl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KamposXestion</title>
+  
+  <!-- Script para configurar las variables de entorno en tiempo de ejecución -->
+  <script>
+    // Esta función toma las variables de entorno de Netlify y las configura en localStorage
+    // para que la aplicación pueda usarlas en tiempo de ejecución
+    (function() {
+      const env = {};
+      try {
+        // Aquí Netlify inyectará las variables de entorno durante el despliegue
+        // usando la funcionalidad de sustitución de variables
+        env.NEXT_PUBLIC_SUPABASE_URL = '{{ NEXT_PUBLIC_SUPABASE_URL }}';
+        env.NEXT_PUBLIC_SUPABASE_ANON_KEY = '{{ NEXT_PUBLIC_SUPABASE_ANON_KEY }}';
+        
+        // Guardar en localStorage para que la aplicación pueda usarlas
+        localStorage.setItem('env', JSON.stringify(env));
+        console.log('Variables de entorno configuradas desde entorno de Netlify');
+      } catch (error) {
+        console.error('Error al configurar variables de entorno:', error);
+      }
+    })();
+  </script>
+</head>
+<body>
+  <!-- Esta página solo se usa como fallback para la configuración de variables -->
+  <div style="display: flex; height: 100vh; align-items: center; justify-content: center;">
+    <p>Cargando KamposXestion...</p>
+  </div>
+  <script>
+    // Redirigir a la página principal después de configurar las variables
+    setTimeout(function() {
+      window.location.href = '/';
+    }, 100);
+  </script>
+</body>
+</html>
