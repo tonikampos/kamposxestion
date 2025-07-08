@@ -1,10 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Valores predeterminados hardcodeados como último recurso
-// Estos valores solo se utilizarán si fallan todas las demás formas de carga
+// Comentamos las credenciales hardcodeadas para evitar errores en Netlify
+// Netlify detecta estas claves como secretos expuestos y bloquea el despliegue
 const HARDCODED_FALLBACKS = {
-  NEXT_PUBLIC_SUPABASE_URL: 'https://qyufkainizdkcnkxzupv.supabase.co',
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF5dWZrYWluaXpka2Nua3h6dXB2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE3OTc3NTcsImV4cCI6MjA2NzM3Mzc1N30.nx3LBmPz2D5UnZXgCtT9zRc6cVXY9rMN2MsP1ETNw8Q'
+  // Los valores ahora se tomarán exclusivamente de las variables de entorno de Netlify
+  NEXT_PUBLIC_SUPABASE_URL: 'placeholder-url',
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: 'placeholder-key'
 };
 
 // Función para verificar si un valor de variable es válido

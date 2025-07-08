@@ -88,13 +88,15 @@ function isValidValue(value) {
       });
     } else {
       console.log('Variables de Netlify no disponibles o inválidas');
+      console.warn('ATENCIÓN: Debes configurar las variables NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY en Netlify');
       
-      // 2. Variables hardcoded para debug (solo en caso de que no haya variables de entorno configuradas)
+      // Verificar si hay valores almacenados previamente
       const storedUrl = localStorage.getItem('NEXT_PUBLIC_SUPABASE_URL');
       const storedKey = localStorage.getItem('NEXT_PUBLIC_SUPABASE_ANON_KEY');
       
       if (!storedUrl || !storedKey) {
-        console.warn('ATENCIÓN: Usando variables de entorno por defecto - Isto debería verse só en desenvolvemento');
+        console.error('No se encontraron valores válidos para conectar con Supabase');
+        console.error('Por favor, configura las variables en Netlify e intenta nuevamente');
       }
     }
   } catch (error) {

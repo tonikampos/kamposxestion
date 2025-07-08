@@ -135,14 +135,14 @@
         };
         showMessage('env-results', `<pre>${JSON.stringify(localStorageVars, null, 2)}</pre>`);
         
-        // Verificar si hay valores de respaldo
-        const hardcodedValues = {
-          NEXT_PUBLIC_SUPABASE_URL: 'https://qyufkainizdkcnkxzupv.supabase.co',
-          NEXT_PUBLIC_SUPABASE_ANON_KEY_LENGTH: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF5dWZrYWluaXpka2Nua3h6dXB2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE3OTc3NTcsImV4cCI6MjA2NzM3Mzc1N30.nx3LBmPz2D5UnZXgCtT9zRc6cVXY9rMN2MsP1ETNw8Q'.length + ' caracteres'
+        // Información sobre variables de entorno requeridas
+        const environmentInfo = {
+          NEXT_PUBLIC_SUPABASE_URL: 'Debe configurarse en Netlify',
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: 'Debe configurarse en Netlify'
         };
         
-        showMessage('env-results', '<h3>Valores hardcodeados disponibles como respaldo</h3>');
-        showMessage('env-results', `<pre>${JSON.stringify(hardcodedValues, null, 2)}</pre>`, 'success');
+        showMessage('env-results', '<h3>Variables de entorno requeridas</h3>');
+        showMessage('env-results', `<pre>${JSON.stringify(environmentInfo, null, 2)}</pre>`, 'warning');
         
       } catch (error) {
         showMessage('env-results', `<p>Error: ${error.message}</p>`, 'error');
@@ -170,11 +170,11 @@
           supabaseKey = window.ENV.NEXT_PUBLIC_SUPABASE_ANON_KEY;
         }
 
-        // 3. Usar valores hardcodeados si es necesario
+        // 3. Si no hay valores disponibles, mostrar error
         if (!supabaseUrl || supabaseUrl.includes('{{')) {
-          supabaseUrl = 'https://qyufkainizdkcnkxzupv.supabase.co';
-          supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF5dWZrYWluaXpka2Nua3h6dXB2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE3OTc3NTcsImV4cCI6MjA2NzM3Mzc1N30.nx3LBmPz2D5UnZXgCtT9zRc6cVXY9rMN2MsP1ETNw8Q';
-          showMessage('connection-results', '<p>Usando valores hardcodeados para a conexión</p>', 'warning');
+          showMessage('connection-results', '<p>No hay variables de entorno configuradas en Netlify.</p>', 'error');
+          showMessage('connection-results', '<p>Debes configurar NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY en Netlify.</p>', 'error');
+          return;
         }
 
         showMessage('connection-results', `<p>Usando: URL=${supabaseUrl.substring(0, 20)}...</p>`);
@@ -206,11 +206,11 @@
         let supabaseUrl = localStorage.getItem('NEXT_PUBLIC_SUPABASE_URL');
         let supabaseKey = localStorage.getItem('NEXT_PUBLIC_SUPABASE_ANON_KEY');
 
-        // Usar valores hardcodeados si es necesario
+        // Si no hay valores disponibles, mostrar error
         if (!supabaseUrl || supabaseUrl.includes('{{')) {
-          supabaseUrl = 'https://qyufkainizdkcnkxzupv.supabase.co';
-          supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF5dWZrYWluaXpka2Nua3h6dXB2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE3OTc3NTcsImV4cCI6MjA2NzM3Mzc1N30.nx3LBmPz2D5UnZXgCtT9zRc6cVXY9rMN2MsP1ETNw8Q';
-          showMessage('auth-results', '<p>Usando valores hardcodeados para a autenticación</p>', 'warning');
+          showMessage('auth-results', '<p>No hay variables de entorno configuradas en Netlify.</p>', 'error');
+          showMessage('auth-results', '<p>Debes configurar NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY en Netlify.</p>', 'error');
+          return;
         }
 
         // Crear cliente de Supabase

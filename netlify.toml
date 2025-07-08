@@ -5,6 +5,12 @@
 [build.environment]
   NEXT_DISABLE_ESLINT = "1"
 
+# Configuración para ignorar advertencias de secretos expuestos
+# Esto es necesario porque usamos variables NEXT_PUBLIC_ que son intencionalmente públicas
+[build.processing.secrets]
+  # Marcar las claves públicas como seguras para exposición
+  allowed = ["NEXT_PUBLIC_*"]
+
 # Configuración para redireccionar páginas no encontradas a la página 404
 [[redirects]]
   from = "/*"
