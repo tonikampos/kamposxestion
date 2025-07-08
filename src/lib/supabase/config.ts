@@ -1,11 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Comentamos las credenciales hardcodeadas para evitar errores en Netlify
-// Netlify detecta estas claves como secretos expuestos y bloquea el despliegue
+// Usamos valores vacíos durante el build para evitar cualquier problema con Netlify
+// Las variables reales se cargarán solo en tiempo de ejecución en el navegador
 const HARDCODED_FALLBACKS = {
-  // Los valores ahora se tomarán exclusivamente de las variables de entorno de Netlify
-  NEXT_PUBLIC_SUPABASE_URL: 'placeholder-url',
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: 'placeholder-key'
+  NEXT_PUBLIC_SUPABASE_URL: '',
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: ''
 };
 
 // Función para verificar si un valor de variable es válido

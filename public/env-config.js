@@ -29,15 +29,17 @@ try {
 
   // 2. Si no hay variables válidas en window.ENV, verificamos si hay valores hardcoded
   if (!hasValidVars) {
-    const hardcodedValues = {
-      NEXT_PUBLIC_SUPABASE_URL: 'https://qyufkainizdkcnkxzupv.supabase.co',
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF5dWZrYWluaXpka2Nua3h6dXB2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE3OTc3NTcsImV4cCI6MjA2NzM3Mzc1N30.nx3LBmPz2D5UnZXgCtT9zRc6cVXY9rMN2MsP1ETNw8Q'
+    console.error('No se encontraron variables de entorno válidas');
+    console.error('Por favor, configura las variables en Netlify');
+    
+    const emptyValues = {
+      NEXT_PUBLIC_SUPABASE_URL: '',
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ''
     };
     
-    Object.keys(hardcodedValues).forEach(key => {
+    Object.keys(emptyValues).forEach(key => {
       if (!isValidEnvValue(localStorage.getItem(key))) {
-        localStorage.setItem(key, hardcodedValues[key]);
-        console.warn(`ATENCIÓN: Usando valor predeterminado para ${key}`);
+        console.error(`Variable ${key} no encontrada. Por favor configúrala en Netlify.`);
       }
     });
   }

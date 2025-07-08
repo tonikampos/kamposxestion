@@ -40,10 +40,10 @@ Para resolver o problema das variables de entorno en Netlify, sigue estes pasos:
 É crucial configurar as variables de entorno para que a túa aplicación se poida conectar a Supabase:
 
 1. Expande a sección **Advanced build settings**.
-2. Engade as seguintes variables de entorno (copia os valores exactos do teu arquivo `.env.local`):
-   - `NEXT_PUBLIC_SUPABASE_URL`: https://qyufkainizdkcnkxzupv.supabase.co
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF5dWZrYWluaXpka2Nua3h6dXB2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE3OTc3NTcsImV4cCI6MjA2NzM3Mzc1N30.nx3LBmPz2D5UnZXgCtT9zRc6cVXY9rMN2MsP1ETNw8Q
-   - `NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY`: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF5dWZrYWluaXpka2Nua3h6dXB2Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MTc5Nzc1NywiZXhwIjoyMDY3MzczNzU3fQ.-Jy8rvN5KQ2bfpyGMSFgXqCRbMnsr4CYE647wIY4PmM
+2. Engade as seguintes variables de entorno (os valores debes obelos do panel de control de Supabase):
+   - `NEXT_PUBLIC_SUPABASE_URL`: URL do teu proxecto Supabase 
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Clave anónima do teu proxecto Supabase
+   - `NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY`: (Opcional) Clave de servizo do teu proxecto Supabase
 
 ### 5. Despregar o sitio
 - Fai clic en **Deploy site**.
