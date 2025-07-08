@@ -34,6 +34,17 @@ const copyConfigFiles = () => {
     console.error('Error copying config.html file:', error);
   }
   
+  // Copia debug.html
+  try {
+    fs.copyFileSync(
+      path.join(__dirname, '..', 'public', 'debug.html'),
+      path.join(outDir, 'debug.html')
+    );
+    console.log('Successfully copied debug.html to output directory');
+  } catch (error) {
+    console.error('Error copying debug.html file:', error);
+  }
+  
   // Crear un archivo netlify.toml en la carpeta de salida
   try {
     const netlifyConfig = fs.readFileSync(

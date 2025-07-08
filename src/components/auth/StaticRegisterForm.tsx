@@ -91,6 +91,12 @@ export default function StaticRegisterPage() {
                 Iniciar sesión
               </a>
             </div>
+            
+            <div className="mt-4 text-center">
+              <a href="/debug.html" className="text-xs text-gray-500 hover:text-gray-700">
+                Problemas coa conexión? Comprobar conexión a Supabase
+              </a>
+            </div>
           </div>
         </div>
       </div>

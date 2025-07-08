@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="gl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Depuración de Supabase - KamposXestion</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      padding: 2rem;
+      max-width: 800px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+    h1 {
+      color: #2563eb;
+    }
+    h2 {
+      margin-top: 2rem;
+      color: #4b5563;
+    }
+    .card {
+      background-color: #f9fafb;
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    .success {
+      background-color: #ecfdf5;
+      border-left: 4px solid #10b981;
+    }
+    .warning {
+      background-color: #fffbeb;
+      border-left: 4px solid #f59e0b;
+    }
+    .error {
+      background-color: #fef2f2;
+      border-left: 4px solid #ef4444;
+    }
+    pre {
+      background-color: #1f2937;
+      color: #f9fafb;
+      padding: 1rem;
+      border-radius: 0.25rem;
+      overflow-x: auto;
+    }
+    button {
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 0.25rem;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #1d4ed8;
+    }
+    #results {
+      margin-top: 1.5rem;
+    }
+    .back-link {
+      display: inline-block;
+      margin-top: 2rem;
+      color: #2563eb;
+      text-decoration: none;
+    }
+    .back-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+  <script src="https://unpkg.com/@supabase/supabase-js@2.50.3"></script>
+  <script src="/env-config.js"></script>
+</head>
+<body>
+  <h1>Depuración de Supabase - KamposXestion</h1>
+  <p>Esta páxina axúdache a diagnosticar problemas coa conexión a Supabase en Netlify.</p>
+
+  <div class="card">
+    <h2>Variables de entorno</h2>
+    <button id="check-env">Comprobar variables de entorno</button>
+    <div id="env-results"></div>
+  </div>
+
+  <div class="card">
+    <h2>Conexión a Supabase</h2>
+    <button id="test-connection">Probar conexión</button>
+    <div id="connection-results"></div>
+  </div>
+
+  <div class="card">
+    <h2>Autenticación</h2>
+    <button id="test-auth">Probar autenticación</button>
+    <div id="auth-results"></div>
+  </div>
+
+  <a href="/" class="back-link">Volver á aplicación</a>
+
+  <script>
+    // Función para mostrar mensajes con formato
+    function showMessage(containerId, message, type = 'info') {
+      const container = document.getElementById(containerId);
+      const div = document.createElement('div');
+      div.className = `card ${type}`;
+      div.innerHTML = message;
+      container.appendChild(div);
+    }
+
+    // Función para comprobar las variables de entorno
+    document.getElementById('check-env').addEventListener('click', function() {
+      const container = document.getElementById('env-results');
+      container.innerHTML = '';
+
+      try {
+        // Comprobar window.ENV
+        showMessage('env-results', '<h3>Variables en window.ENV</h3>');
+        if (window.ENV) {
+          const envHtml = `<pre>${JSON.stringify({
+            NEXT_PUBLIC_SUPABASE_URL: window.ENV.NEXT_PUBLIC_SUPABASE_URL ? window.ENV.NEXT_PUBLIC_SUPABASE_URL.substring(0, 20) + '...' : 'non definida',
+            NEXT_PUBLIC_SUPABASE_ANON_KEY: window.ENV.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'definida (' + window.ENV.NEXT_PUBLIC_SUPABASE_ANON_KEY.length + ' caracteres)' : 'non definida',
+            valuesContainPlaceholders: window.ENV.NEXT_PUBLIC_SUPABASE_URL && window.ENV.NEXT_PUBLIC_SUPABASE_URL.includes('{{') 
+          }, null, 2)}</pre>`;
+          showMessage('env-results', envHtml);
+        } else {
+          showMessage('env-results', '<p>window.ENV non está definido</p>', 'error');
+        }
+
+        // Comprobar localStorage
+        showMessage('env-results', '<h3>Variables en localStorage</h3>');
+        const localStorageVars = {
+          NEXT_PUBLIC_SUPABASE_URL: localStorage.getItem('NEXT_PUBLIC_SUPABASE_URL') ? localStorage.getItem('NEXT_PUBLIC_SUPABASE_URL').substring(0, 20) + '...' : 'non definida',
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: localStorage.getItem('NEXT_PUBLIC_SUPABASE_ANON_KEY') ? 'definida (' + localStorage.getItem('NEXT_PUBLIC_SUPABASE_ANON_KEY').length + ' caracteres)' : 'non definida',
+        };
+        showMessage('env-results', `<pre>${JSON.stringify(localStorageVars, null, 2)}</pre>`);
+        
+        // Verificar si hay valores de respaldo
+        const hardcodedValues = {
+          NEXT_PUBLIC_SUPABASE_URL: 'https://qyufkainizdkcnkxzupv.supabase.co',
+          NEXT_PUBLIC_SUPABASE_ANON_KEY_LENGTH: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF5dWZrYWluaXpka2Nua3h6dXB2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE3OTc3NTcsImV4cCI6MjA2NzM3Mzc1N30.nx3LBmPz2D5UnZXgCtT9zRc6cVXY9rMN2MsP1ETNw8Q'.length + ' caracteres'
+        };
+        
+        showMessage('env-results', '<h3>Valores hardcodeados disponibles como respaldo</h3>');
+        showMessage('env-results', `<pre>${JSON.stringify(hardcodedValues, null, 2)}</pre>`, 'success');
+        
+      } catch (error) {
+        showMessage('env-results', `<p>Error: ${error.message}</p>`, 'error');
+      }
+    });
+
+    // Función para probar la conexión a Supabase
+    document.getElementById('test-connection').addEventListener('click', async function() {
+      const container = document.getElementById('connection-results');
+      container.innerHTML = '';
+      showMessage('connection-results', '<p>Probando conexión a Supabase...</p>');
+
+      try {
+        // Intentar obtener la URL y clave de Supabase
+        let supabaseUrl;
+        let supabaseKey;
+
+        // 1. Intentar desde localStorage
+        supabaseUrl = localStorage.getItem('NEXT_PUBLIC_SUPABASE_URL');
+        supabaseKey = localStorage.getItem('NEXT_PUBLIC_SUPABASE_ANON_KEY');
+
+        // 2. Intentar desde window.ENV
+        if ((!supabaseUrl || supabaseUrl.includes('{{')) && window.ENV) {
+          supabaseUrl = window.ENV.NEXT_PUBLIC_SUPABASE_URL;
+          supabaseKey = window.ENV.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+        }
+
+        // 3. Usar valores hardcodeados si es necesario
+        if (!supabaseUrl || supabaseUrl.includes('{{')) {
+          supabaseUrl = 'https://qyufkainizdkcnkxzupv.supabase.co';
+          supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF5dWZrYWluaXpka2Nua3h6dXB2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE3OTc3NTcsImV4cCI6MjA2NzM3Mzc1N30.nx3LBmPz2D5UnZXgCtT9zRc6cVXY9rMN2MsP1ETNw8Q';
+          showMessage('connection-results', '<p>Usando valores hardcodeados para a conexión</p>', 'warning');
+        }
+
+        showMessage('connection-results', `<p>Usando: URL=${supabaseUrl.substring(0, 20)}...</p>`);
+        
+        // Crear cliente de Supabase
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+        
+        // Hacer una consulta simple
+        const { data, error } = await supabase.from('profiles').select('count', { count: 'exact', head: true });
+        
+        if (error) {
+          showMessage('connection-results', `<p>Error ao conectar con Supabase: ${error.message}</p>`, 'error');
+        } else {
+          showMessage('connection-results', '<p>✅ Conexión a Supabase exitosa!</p>', 'success');
+        }
+      } catch (error) {
+        showMessage('connection-results', `<p>Error: ${error.message}</p>`, 'error');
+      }
+    });
+
+    // Función para probar la autenticación
+    document.getElementById('test-auth').addEventListener('click', async function() {
+      const container = document.getElementById('auth-results');
+      container.innerHTML = '';
+      showMessage('auth-results', '<p>Probando servicio de autenticación de Supabase...</p>');
+
+      try {
+        // Intentar obtener la URL y clave de Supabase
+        let supabaseUrl = localStorage.getItem('NEXT_PUBLIC_SUPABASE_URL');
+        let supabaseKey = localStorage.getItem('NEXT_PUBLIC_SUPABASE_ANON_KEY');
+
+        // Usar valores hardcodeados si es necesario
+        if (!supabaseUrl || supabaseUrl.includes('{{')) {
+          supabaseUrl = 'https://qyufkainizdkcnkxzupv.supabase.co';
+          supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF5dWZrYWluaXpka2Nua3h6dXB2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE3OTc3NTcsImV4cCI6MjA2NzM3Mzc1N30.nx3LBmPz2D5UnZXgCtT9zRc6cVXY9rMN2MsP1ETNw8Q';
+          showMessage('auth-results', '<p>Usando valores hardcodeados para a autenticación</p>', 'warning');
+        }
+
+        // Crear cliente de Supabase
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+        
+        // Comprobar si hay una sesión activa
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          showMessage('auth-results', `<p>Error ao acceder ao servizo de autenticación: ${error.message}</p>`, 'error');
+        } else if (data.session) {
+          showMessage('auth-results', '<p>✅ Sesión activa atopada!</p>', 'success');
+          showMessage('auth-results', `<pre>${JSON.stringify({
+            user: data.session.user.email,
+            expires_at: new Date(data.session.expires_at * 1000).toLocaleString()
+          }, null, 2)}</pre>`, 'success');
+        } else {
+          showMessage('auth-results', '<p>✅ Servizo de autenticación funcionando, pero non hai sesión activa</p>', 'success');
+        }
+      } catch (error) {
+        showMessage('auth-results', `<p>Error: ${error.message}</p>`, 'error');
+      }
+    });
+  </script>
+</body>
+</html>
