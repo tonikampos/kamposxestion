@@ -1,8 +1,12 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# KamposXestion
 
-## Getting Started
+Sistema de xestión de alumnado desenvolvido con Next.js e Supabase.
 
-First, run the development server:
+## Comenzando
+
+### Desenvolvemento local
+
+Para executar o servidor de desenvolvemento:
 
 ```bash
 npm run dev
@@ -14,23 +18,32 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abre [http://localhost:3000](http://localhost:3000) no teu navegador para ver o resultado.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Configuración de Supabase
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Para configurar Supabase como base de datos e sistema de autenticación, segue as instruccións en [SUPABASE_SETUP.md](./SUPABASE_SETUP.md).
 
-## Learn More
+## Despregamento en Netlify
 
-To learn more about Next.js, take a look at the following resources:
+Este proxecto está configurado para ser despregado facilmente en Netlify:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Crea unha conta en [Netlify](https://www.netlify.com/) se aínda non a tes
+2. Fai clic en "New site from Git" e conecta o teu repositorio GitHub
+3. Selecciona o repositorio `kamposxestion`
+4. Configura o seguinte:
+   - Build command: `npm run build`
+   - Publish directory: `.next`
+5. Configura as variables de entorno:
+   - `NEXT_PUBLIC_SUPABASE_URL`: A URL da túa instancia Supabase
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: A clave anónima da túa instancia Supabase
+   - `NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY`: A clave de servizo da túa instancia Supabase
+6. Fai clic en "Deploy site"
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Tecnoloxías
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [Next.js](https://nextjs.org/) - Framework de React
+- [Supabase](https://supabase.com/) - Base de datos e autenticación
+- [React Hook Form](https://react-hook-form.com/) - Xestión de formularios
+- [Zod](https://zod.dev/) - Validación de datos
+- [Tailwind CSS](https://tailwindcss.com/) - Framework CSS
