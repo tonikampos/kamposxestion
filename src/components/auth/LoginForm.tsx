@@ -43,9 +43,10 @@ export default function LoginForm() {
       await signIn(data.email, data.password);
       toast.success('Inicio de sesión realizado con éxito!');
       router.push('/dashboard');
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error('Erro ao iniciar sesión:', error);
-      toast.error(error.message || 'Erro ao iniciar sesión');
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao iniciar sesión';
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

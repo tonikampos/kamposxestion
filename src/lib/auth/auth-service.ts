@@ -78,11 +78,13 @@ export const registerUser = async (
     
     console.log('Rexistro de usuario completado con éxito:', userData);
     return userData;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erro completo ao rexistrar usuario:', error);
     // Asegurarse de que se devolve unha mensaxe de erro lexible
-    if (typeof error === 'object' && error !== null) {
-      throw new Error(error.message || 'Erro descoñecido ao rexistrar usuario');
+    if (error instanceof Error) {
+      throw new Error(error.message);
+    } else if (typeof error === 'object' && error !== null && 'message' in error) {
+      throw new Error((error as {message: string}).message || 'Erro descoñecido ao rexistrar usuario');
     } else {
       throw new Error('Erro descoñecido ao rexistrar usuario');
     }
@@ -137,9 +139,13 @@ export const signIn = async (
       await supabase.from('profiles').insert([userData]);
       return userData;
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Erro ao iniciar sesión:", error);
-    throw error;
+    if (error instanceof Error) {
+      throw error;
+    } else {
+      throw new Error('Erro descoñecido ao iniciar sesión');
+    }
   }
 };
 

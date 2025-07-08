@@ -57,14 +57,15 @@ export default function RegisterForm() {
       
       toast.success('Rexistro completado con éxito!');
       router.push('/dashboard');
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error('Erro no rexistro:', error);
       
       // Mostrar detalles más específicos del error
-      if (error.message) {
+      if (error instanceof Error) {
         toast.error(`Erro: ${error.message}`);
-      } else if (error.code) {
-        toast.error(`Erro (${error.code}): ${error.details || 'Revisa a consola para máis detalles'}`);
+      } else if (typeof error === 'object' && error !== null && 'code' in error) {
+        const customError = error as { code: string, details?: string };
+        toast.error(`Erro (${customError.code}): ${customError.details || 'Revisa a consola para máis detalles'}`);
       } else {
         toast.error('Erro descoñecido ao rexistrarse');
       }
