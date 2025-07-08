@@ -13,6 +13,8 @@ const nextConfig = {
     // ⚠️ Permiso para ignorar errores de TypeScript durante la compilación
     ignoreBuildErrors: true,
   },
+  // Configuración para Next.js App Router
+  trailingSlash: true
 };
 
 module.exports = nextConfig;

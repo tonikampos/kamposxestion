@@ -1,3 +1,20 @@
 [build]
-  command = "NEXT_DISABLE_ESLINT=1 npm run build"
+  command = "npm run build"
   publish = "out"
+
+[build.environment]
+  NEXT_DISABLE_ESLINT = "1"
+
+# Configuración para redireccionar páginas no encontradas a la página 404
+[[redirects]]
+  from = "/*"
+  to = "/404.html"
+  status = 404
+  force = false
+
+# Configuración para SPA
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = false

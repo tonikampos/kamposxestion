@@ -4,10 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "NEXT_DISABLE_ESLINT=1 next build",
-    "start": "next start",
-    "lint": "next lint",
-    "export": "next export"
+    "build": "next build",
+    "postbuild": "node scripts/copy-netlify-config.js",
+    "start": "npx serve out",
+    "lint": "next lint"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",
