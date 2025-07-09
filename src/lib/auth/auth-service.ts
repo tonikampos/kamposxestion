@@ -1,4 +1,4 @@
-import { supabase, getServiceSupabase } from '../supabase/config';
+import { supabase, getServiceSupabase, reinitializeSupabaseClient } from '../supabase/config';
 
 export interface UserData {
   id: string;
@@ -54,8 +54,25 @@ export const registerUser = async (
     
     // Sistema simplificado sen verificación de email
     
-    // Paso 1: Crear o usuario con signUp normal
-    console.log('Intentando crear usuario con signUp...');
+    // Paso 1: Verificar que el cliente está inicializado correctamente
+    try {
+      const { data: sessionCheck } = await supabase.auth.getSession();
+      console.log('Verificación de cliente Supabase:', { 
+        client_initialized: !!supabase,
+        can_get_session: !!sessionCheck
+      });
+    } catch (checkError) {
+      console.error('Error al verificar cliente Supabase:', checkError);
+      // Intentar reiniciar el cliente si está disponible
+      if (typeof reinitializeSupabaseClient === 'function' && typeof window !== 'undefined') {
+        console.log('Intentando reiniciar el cliente Supabase antes de continuar...');
+        reinitializeSupabaseClient();
+      }
+    }
+    
+    // Paso 2: Crear o usuario con signUp normal
+    console.log('Intentando crear usuario con signUp (flowType: implicit)...');
+    // Configuración explícita para asegurar que funciona sin emails
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: email,
       password: password,
@@ -64,15 +81,20 @@ export const registerUser = async (
           full_name: fullName,
           role: 'profesor'
         },
-        // IMPORTANTE: Desactivar completamente el envío de emails
-        emailRedirectTo: null,
-        shouldCreateUser: true
+        emailRedirectTo: typeof window !== 'undefined' ? window.location.origin : undefined
       }
     });
 
     if (authError) {
       console.error('Erro ao crear usuario en Auth:', authError);
-      throw new Error(`Erro de autenticación: ${authError.message}`);
+      // Error más específico para diagnóstico
+      if (authError.message.includes('JWT')) {
+        throw new Error(`Erro de autenticación JWT: Posible problema con o cliente Supabase`);
+      } else if (authError.message.includes('network')) {
+        throw new Error(`Erro de rede: Verifica a conexión a internet ou os proxies`);
+      } else {
+        throw new Error(`Erro de autenticación: ${authError.message}`);
+      }
     }
     
     if (!authData.user) {
@@ -80,57 +102,194 @@ export const registerUser = async (
       throw new Error('Non se puido crear o usuario');
     }
 
-    console.log('Usuario creado con éxito:', { userId: authData.user.id });
+    console.log('Usuario creado con éxito:', { userId: authData.user.id, user_data: authData.user });
 
     // Paso 2: Intentar confirmar manualmente para evitar cualquier problema con emails
     // Nota: Esta función puede no tener efecto en el cliente, pero al menos lo intentamos
     await confirmUserManually(authData.user.id);
 
-    // Paso 3: Crear o perfil na táboa profiles
+    // Paso 3: Verificar estructura de la tabla profiles
+    try {
+      console.log('Verificando estructura de tabla profiles...');
+      const { data: tableInfo, error: tableError } = await supabase
+        .from('profiles')
+        .select('id')
+        .limit(1);
+      
+      if (tableError) {
+        console.error('Error al verificar tabla profiles:', tableError);
+        console.log('La tabla profiles puede no existir o tener problemas de acceso');
+      } else {
+        console.log('Tabla profiles accesible correctamente');
+      }
+    } catch (tableCheckError) {
+      console.error('Excepción al verificar tabla profiles:', tableCheckError);
+    }
+    
+    // Paso 4: Crear o perfil na táboa profiles con UPSERT como estrategia principal
     console.log('Insertando perfil para:', {
       id: authData.user.id,
       email,
       full_name: fullName
     });
     
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .insert({
-        id: authData.user.id, 
-        email: email, 
-        full_name: fullName,
-        role: 'profesor'
-      });
-    
-    if (profileError) {
-      console.error('Erro ao crear o perfil:', profileError);
-      // Continuamos aínda que falle a creación do perfil
-    } else {
-      console.log('Perfil creado con éxito');
+    // Usar directamente upsert que es más seguro
+    try {
+      console.log('Utilizando upsert para garantizar la creación del perfil...');
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: authData.user.id, 
+          email: email, 
+          full_name: fullName,
+          role: 'profesor',
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'id',
+          returning: 'minimal'  // No necesitamos los datos de retorno
+        });
+      
+      if (profileError) {
+        console.error('Erro ao crear o perfil con upsert:', profileError);
+        
+        // Verificar si hay problemas con la estructura de la tabla
+        if (profileError.message?.includes('column') && profileError.message?.includes('does not exist')) {
+          console.error('Error de estructura de tabla:', profileError.message);
+          // Intentar una versión minimalista con solo los campos esenciales
+          const { error: minimalError } = await supabase
+            .from('profiles')
+            .upsert({
+              id: authData.user.id, 
+              email: email, 
+              full_name: fullName,
+              role: 'profesor'
+            }, { onConflict: 'id' });
+            
+          if (!minimalError) {
+            console.log('Perfil creado con campos mínimos');
+          } else {
+            console.error('Fallo incluso con campos mínimos:', minimalError);
+            throw new Error(`Error al crear perfil incluso con campos mínimos: ${minimalError.message}`);
+          }
+        } else {
+          // Para otros errores, intentar insert directo
+          console.log('Intentando insert como alternativa...');
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .insert({
+              id: authData.user.id, 
+              email: email, 
+              full_name: fullName,
+              role: 'profesor'
+            });
+            
+          if (insertError) {
+            // Solo reportar, no fallar todo el registro
+            console.error('Error en insert alternativo:', insertError);
+          } else {
+            console.log('Insert alternativo exitoso');
+          }
+        }
+      } else {
+        console.log('Perfil creado/actualizado con éxito');
+      }
+    } catch (profileOperationError) {
+      console.error('Excepción general al gestionar el perfil:', profileOperationError);
+      // No lanzamos error aquí, continuamos el flujo
     }
     
-    // Iniciar sesión automáticamente con el nuevo usuario
+    // Paso 5: Esperar brevemente para darle tiempo al sistema a procesar
+    if (typeof window !== 'undefined') {
+      console.log('Esperando 500ms antes de iniciar sesión automáticamente...');
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    
+    // Paso 6: Iniciar sesión automáticamente con el nuevo usuario
     console.log('Iniciando sesión automáticamente con el nuevo usuario...');
     
-    // Intentamos iniciar sesión directamente con los datos proporcionados
-    // para asegurar que el usuario quede autenticado independientemente de confirmación de email
-    const { data: sessionData, error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-    
-    if (signInError) {
-      console.warn('Non se puido iniciar sesión automáticamente tras o rexistro:', signInError);
-      // Incluso si falla, seguimos adelante y devolvemos el usuario
-    } else {
-      console.log('Sesión iniciada automáticamente tras o rexistro');
-      // Verificar si hay sesión activa después del inicio de sesión
-      const { data: checkSession } = await supabase.auth.getSession();
-      if (checkSession?.session) {
-        console.log('Confirmado: Hay una sesión activa después del registro');
-      } else {
-        console.warn('No se detecta sesión activa después del registro');
+    try {
+      // Verificar si ya tenemos una sesión activa
+      const { data: existingSession } = await supabase.auth.getSession();
+      
+      if (existingSession?.session) {
+        console.log('Ya existe una sesión activa, verificando si es del usuario correcto...');
+        
+        if (existingSession.session.user.id === authData.user.id) {
+          console.log('La sesión activa ya pertenece al usuario recién registrado');
+          // Ya tenemos la sesión correcta
+          return {
+            id: authData.user.id,
+            email,
+            full_name: fullName,
+            role: 'profesor'
+          };
+        }
+        
+        // Si la sesión es de otro usuario, hay que hacer logout primero
+        console.log('La sesión activa pertenece a otro usuario, haciendo logout...');
+        await supabase.auth.signOut();
+        
+        // Esperar brevemente antes de intentar el nuevo login
+        if (typeof window !== 'undefined') {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
       }
+      
+      // Usar signInWithPassword con timeout de seguridad
+      console.log('Intentando iniciar sesión con signInWithPassword...');
+      
+      const loginPromise = supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      // Añadir un timeout por si se queda colgado
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Timeout al iniciar sesión')), 5000);
+      });
+      
+      // Competir entre el login normal y el timeout
+      const result: any = await Promise.race([loginPromise, timeoutPromise])
+        .catch(error => {
+          console.warn('Error o timeout al iniciar sesión:', error);
+          return { error };
+        });
+      
+      const signInError = result.error;
+      const sessionData = result.data;
+      
+      if (signInError) {
+        console.warn('No se pudo iniciar sesión automáticamente tras el registro:', signInError);
+        
+        // Verificar si a pesar del error tenemos sesión
+        const { data: currentSession } = await supabase.auth.getSession();
+        if (currentSession?.session) {
+          console.log('A pesar del error, se encontró una sesión activa');
+        } else {
+          console.warn('No hay sesión activa después del intento de login');
+          
+          // Último intento: reiniciar el cliente y volver a probar
+          if (typeof window !== 'undefined') {
+            console.log('Intentando reiniciar cliente y sesión...');
+            reinitializeSupabaseClient();
+            
+            // Esperar un poco y verificar sesión nuevamente
+            await new Promise(resolve => setTimeout(resolve, 800));
+            const { data: finalCheck } = await supabase.auth.getSession();
+            
+            if (finalCheck?.session) {
+              console.log('Sesión recuperada después de reiniciar cliente');
+            } else {
+              console.warn('No se pudo recuperar la sesión después de reiniciar');
+            }
+          }
+        }
+      } else if (sessionData) {
+        console.log('Sesión iniciada automáticamente tras el registro');
+      }
+    } catch (loginError) {
+      console.error('Excepción al iniciar sesión automáticamente:', loginError);
+      // No lanzamos error aquí, seguimos con el flujo
     }
     
     // Construír e devolver os datos do usuario

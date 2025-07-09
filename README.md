@@ -26,7 +26,12 @@ Para configurar Supabase como base de datos e sistema de autenticación, segue a
 
 ### Sistema de Autenticación Simplificado
 
-O sistema de autenticación foi **completamente modificado** para eliminar o envío de emails. Os usuarios poden rexistrarse e iniciar sesión inmediatamente sen recibir ningún correo de verificación. Esto resolve definitivamente os problemas con emails rebotados e simplifica o proceso de autenticación. Para máis información, consulta:
+O sistema de autenticación foi **completamente modificado** para eliminar o envío de emails. Os usuarios poden rexistrarse e iniciar sesión inmediatamente sen recibir ningún correo de verificación. Esto resolve definitivamente os problemas con emails rebotados e simplifica o proceso de autenticación. 
+
+Se tes problemas co rexistro de usuarios ou a inserción na base de datos, consulta:
+- [USER_REGISTRATION_TROUBLESHOOTING.md](./docs/USER_REGISTRATION_TROUBLESHOOTING.md) - Solución de problemas específicos de rexistro
+
+Para máis información xeral sobre a autenticación:
 
 - [AUTH_SIMPLIFICATION.md](./docs/AUTH_SIMPLIFICATION.md) - Detalles da simplificación do sistema
 - [DISABLE_SUPABASE_EMAILS.md](./docs/DISABLE_SUPABASE_EMAILS.md) - Configuración para desactivar emails en Supabase

@@ -9,6 +9,7 @@ import { toast } from 'react-hot-toast';
 export default function DebugPage() {
   const [connectionState, setConnectionState] = useState<'checking' | 'connected' | 'error'>('checking');
   const [sessionState, setSessionState] = useState<'checking' | 'authenticated' | 'anonymous'>('checking');
+  const [sqlConfigState, setSqlConfigState] = useState<'checking' | 'configured' | 'not-configured' | 'error'>('checking');
   const [envVariables, setEnvVariables] = useState<{[key: string]: string | null}>({});
   const [debugInfo, setDebugInfo] = useState<string>('');
   const [isResetting, setIsResetting] = useState(false);
@@ -18,8 +19,48 @@ export default function DebugPage() {
   useEffect(() => {
     checkConnection();
     checkSession();
+    checkSqlConfig();
     getEnvVariables();
   }, []);
+
+  // Verificar la configuración SQL para desactivar emails
+  const checkSqlConfig = async () => {
+    try {
+      setSqlConfigState('checking');
+      setDebugInfo(prev => prev + '\n\n[INFO] Verificando configuración SQL para emails...');
+      
+      const response = await fetch('/api/auth/check-sql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        if (result.configurationApplied) {
+          setSqlConfigState('configured');
+          setDebugInfo(prev => prev + '\n[OK] La configuración SQL para desactivar emails está correctamente aplicada');
+        } else {
+          setSqlConfigState('not-configured');
+          setDebugInfo(prev => prev + '\n[ALERTA] La configuración SQL para desactivar emails NO está aplicada correctamente');
+          setDebugInfo(prev => prev + '\n[INFO] Debes ejecutar el script SQL en el dashboard de Supabase');
+        }
+      } else {
+        setSqlConfigState('error');
+        setDebugInfo(prev => prev + `\n[ERROR] No se pudo verificar la configuración SQL: ${result.message || 'Error desconocido'}`);
+        
+        if (result.isProduction) {
+          setDebugInfo(prev => prev + '\n[INFO] Esta verificación no está disponible en producción por seguridad');
+        }
+      }
+    } catch (error) {
+      console.error('Error al verificar configuración SQL:', error);
+      setSqlConfigState('error');
+      setDebugInfo(prev => prev + `\n[ERROR] Excepción al verificar configuración SQL: ${(error as Error).message}`);
+    }
+  };
 
   const checkConnection = async () => {
     try {
@@ -103,6 +144,7 @@ export default function DebugPage() {
       // Verificar conexión de nuevo
       await checkConnection();
       await checkSession();
+      await checkSqlConfig();
       
       toast.success('Conexión reiniciada correctamente', { id: 'reset' });
     } catch (error) {
@@ -181,6 +223,21 @@ export default function DebugPage() {
             </p>
           </div>
           
+          <div className="mb-4">
+            <p className="text-gray-700">
+              <span className="font-medium">Configuración SQL:</span>{' '}
+              {sqlConfigState === 'checking' ? (
+                <span className="text-yellow-500">Verificando...</span>
+              ) : sqlConfigState === 'configured' ? (
+                <span className="text-green-500">Configurado</span>
+              ) : sqlConfigState === 'not-configured' ? (
+                <span className="text-red-500">No configurado</span>
+              ) : (
+                <span className="text-red-500">Error al verificar</span>
+              )}
+            </p>
+          </div>
+          
           <div className="mb-6">
             <h3 className="font-medium mb-2">Variables de entorno:</h3>
             <div className="bg-gray-100 p-3 rounded">
@@ -208,6 +265,13 @@ export default function DebugPage() {
               className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded disabled:opacity-70"
             >
               {isResetting ? 'Reiniciando...' : 'Reiniciar conexión a Supabase'}
+            </button>
+            
+            <button
+              onClick={checkSqlConfig}
+              className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded"
+            >
+              Verificar configuración SQL para emails
             </button>
             
             <button

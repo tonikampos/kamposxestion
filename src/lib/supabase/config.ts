@@ -171,13 +171,13 @@ export const supabase = (() => {
         url: supabaseUrl.substring(0, 20) + '...', 
         keyLength: supabaseAnonKey.length 
       });
+      // Configuración explícita para funcionar sin emails
       _supabase = createClient(supabaseUrl, supabaseAnonKey, {
         auth: {
           persistSession: true,
           autoRefreshToken: true,
-          detectSessionInUrl: true,
-          // Deshabilitamos completamente la verificación por email
-          flowType: 'implicit'
+          detectSessionInUrl: false, // Cambiamos a false para evitar interferencias
+          flowType: 'implicit' // Autenticación sin emails
         }
       });
       console.log('Cliente Supabase inicializado correctamente (con emails DESACTIVADOS)');

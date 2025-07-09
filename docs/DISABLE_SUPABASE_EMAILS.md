@@ -65,16 +65,24 @@ const confirmUserManually = async (userId: string): Promise<boolean> => {
 };
 ```
 
-## Configuración adicional en Supabase Dashboard
+## IMPORTANTE: Configuración requerida en Supabase Dashboard
 
-Para asegurar que el sistema funcione correctamente, se recomienda también configurar Supabase Dashboard:
+Para asegurar que el sistema funcione correctamente y no se envíen emails, es **OBLIGATORIO** realizar los siguientes pasos:
 
 1. Acceder a [app.supabase.com](https://app.supabase.com)
 2. Seleccionar el proyecto de KamposXestion
 3. Ir a Authentication > Providers
-4. En Email Auth, asegurarse de que:
-   - "Confirm email" esté desactivado
-   - "Enable email confirmations" esté desactivado
+4. En Email Auth, asegurarse de desactivar:
+   - Desmarcar "Enable Sign Up" y volver a marcarlo (esto resetea algunas configuraciones)
+   - Desmarcar "Confirm email" 
+   - Establecer "Secure email change" en OFF
+
+5. Ir al SQL Editor y ejecutar el script `supabase/disable_emails.sql` incluido en este proyecto. Este script:
+   - Desactiva la confirmación por email a nivel de base de datos
+   - Marca todos los emails existentes como confirmados
+   - Crea un trigger para confirmar automáticamente los nuevos emails
+
+Sin estos cambios, Supabase seguirá enviando emails de verificación independientemente de la configuración del código.
 
 ## Funcionamiento esperado
 
