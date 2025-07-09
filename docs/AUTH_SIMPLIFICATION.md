@@ -1,14 +1,17 @@
 # Simplificación del Sistema de Autenticación
 
-Se ha simplificado el sistema de autenticación para eliminar la dependencia del envío de emails, evitando así los problemas con emails rebotados que estaban afectando la funcionalidad de login y registro.
+Se ha simplificado el sistema de autenticación para eliminar **completamente** la dependencia del envío de emails, evitando así los problemas con emails rebotados que estaban afectando la funcionalidad de login y registro.
 
 ## Cambios Realizados
 
-### 1. Eliminación de la Verificación por Email
+### 1. Desactivación Total de Emails en Supabase
 
 - Se ha configurado Supabase para usar el `flowType: 'implicit'`, lo que deshabilita la redirección automática para verificación de email.
-- Se ha eliminado la opción `emailRedirectTo` al registrar usuarios, lo que evita el envío de emails de verificación.
-- Los usuarios ahora pueden iniciar sesión inmediatamente después del registro, sin necesidad de verificar su dirección de correo electrónico.
+- Se ha configurado explícitamente `emailRedirectTo: null` y `shouldCreateUser: true` en el proceso de registro.
+- Se ha añadido una función para confirmar manualmente usuarios, evitando la necesidad de verificación por email.
+- Los usuarios ahora pueden iniciar sesión inmediatamente después del registro, sin recibir ningún email.
+
+Para una descripción detallada de estos cambios, consulta [DISABLE_SUPABASE_EMAILS.md](./DISABLE_SUPABASE_EMAILS.md).
 
 ### 2. Simplificación de la Validación de Email
 

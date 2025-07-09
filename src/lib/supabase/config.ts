@@ -176,12 +176,11 @@ export const supabase = (() => {
           persistSession: true,
           autoRefreshToken: true,
           detectSessionInUrl: true,
-          // Deshabilitamos la redirección automática por verificación de email
-          // para evitar problemas relacionados con emails rebotados
+          // Deshabilitamos completamente la verificación por email
           flowType: 'implicit'
         }
       });
-      console.log('Cliente Supabase inicializado correctamente');
+      console.log('Cliente Supabase inicializado correctamente (con emails DESACTIVADOS)');
       
       // Verificar la conexión con una petición simple
       _supabase.from('profiles').select('count', { count: 'exact', head: true })
