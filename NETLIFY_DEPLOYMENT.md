@@ -2,6 +2,16 @@
 
 Esta guía explica como despregar KamposXestion en Netlify e asegurar a correcta conexión coa base de datos de Supabase.
 
+## 📝 Sistema de autenticación simplificado
+
+O sistema de autenticación foi simplificado para non depender do envío de emails. Isto significa que:
+
+1. Non é necesario configurar un provedor SMTP personalizado en Supabase.
+2. Os usuarios poden iniciar sesión inmediatamente despois de rexistrarse.
+3. Non hai problemas con emails rebotados ou verificación de email.
+
+Para máis información, consulta [AUTH_SIMPLIFICATION.md](./docs/AUTH_SIMPLIFICATION.md).
+
 ## ⚠️ SOLUCIÓN PARA PROBLEMAS DE VARIABLES DE ENTORNO ⚠️
 
 Para resolver o problema das variables de entorno en Netlify, sigue estes pasos:

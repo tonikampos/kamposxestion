@@ -39,15 +39,54 @@ export default function LoginForm() {
   const onSubmit = async (data: LoginFormValues) => {
     setIsSubmitting(true);
     
+    // Establecemos un timeout para evitar que el botón quede bloqueado indefinidamente
+    const loginTimeout = setTimeout(() => {
+      if (isSubmitting) {
+        toast.error('A conexión está tardando moito tempo. Por favor, inténteo de novo.');
+        setIsSubmitting(false);
+      }
+    }, 15000); // 15 segundos de timeout
+    
     try {
+      // Verificamos si tenemos las variables de entorno necesarias
+      const envVars = {
+        url: localStorage.getItem('NEXT_PUBLIC_SUPABASE_URL'),
+        key: localStorage.getItem('NEXT_PUBLIC_SUPABASE_ANON_KEY')
+      };
+      
+      if (!envVars.url || !envVars.key) {
+        console.error('Faltan variables de entorno esenciales:', { 
+          url_missing: !envVars.url,
+          key_missing: !envVars.key
+        });
+        toast.error('Error de configuración: Faltan variables de Supabase en Netlify');
+        return;
+      }
+      
+      console.log('Intentando iniciar sesión:', { email: data.email });
+      toast.loading('Iniciando sesión...', { id: 'login' });
+      
       await signIn(data.email, data.password);
-      toast.success('Inicio de sesión realizado con éxito!');
+      
+      toast.success('Inicio de sesión realizado con éxito!', { id: 'login' });
       router.push('/dashboard');
     } catch (error: Error | unknown) {
       console.error('Erro ao iniciar sesión:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Erro ao iniciar sesión';
-      toast.error(errorMessage);
+      
+      // Mensajes de error más específicos
+      if (error instanceof Error) {
+        if (error.message.includes('Invalid login credentials')) {
+          toast.error('Correo ou contrasinal incorrectos', { id: 'login' });
+        } else if (error.message.includes('Invalid API key')) {
+          toast.error('Error de configuración: API key inválida. Por favor contacta ao administrador', { id: 'login' });
+        } else {
+          toast.error(`Erro ao iniciar sesión: ${error.message}`, { id: 'login' });
+        }
+      } else {
+        toast.error('Erro descoñecido ao iniciar sesión', { id: 'login' });
+      }
     } finally {
+      clearTimeout(loginTimeout);
       setIsSubmitting(false);
     }
   };

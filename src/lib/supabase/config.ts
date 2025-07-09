@@ -145,7 +145,10 @@ export const supabase = (() => {
         auth: {
           persistSession: true,
           autoRefreshToken: true,
-          detectSessionInUrl: true
+          detectSessionInUrl: true,
+          // Deshabilitamos la redirección automática por verificación de email
+          // para evitar problemas relacionados con emails rebotados
+          flowType: 'implicit'
         }
       });
       console.log('Cliente Supabase inicializado correctamente');

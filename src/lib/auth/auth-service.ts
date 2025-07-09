@@ -30,8 +30,7 @@ export const registerUser = async (
       key_available: Boolean(envVars.key)
     });
     
-    // En un entorno estático como Netlify, usaremos el método signUp regular
-    // en lugar de admin.createUser que requiere la clave de servicio
+    // Sistema simplificado sen verificación de email
     
     // Paso 1: Crear o usuario con signUp normal
     console.log('Intentando crear usuario con signUp...');
@@ -42,7 +41,9 @@ export const registerUser = async (
         data: {
           full_name: fullName,
           role: 'profesor'
-        }
+        },
+        // Desactivamos el email de confirmación
+        emailRedirectTo: undefined
       }
     });
 
@@ -82,7 +83,7 @@ export const registerUser = async (
     }
     
     // Iniciar sesión automáticamente con el nuevo usuario
-    console.log('Iniciando sesión automáticamente con el nuevo usuario...');
+    console.log('Iniciando sesión automáticamente con el novo usuario...');
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password
@@ -125,13 +126,25 @@ export const signIn = async (
   password: string
 ): Promise<UserData> => {
   try {
+    console.log('Intentando iniciar sesión:', { email });
+    
+    // Autenticación simplificada sen verificar se o email está verificado
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password
     });
     
-    if (error) throw error;
-    if (!data.user) throw new Error('Non se puido iniciar sesión');
+    if (error) {
+      console.error('Error al iniciar sesión:', error);
+      throw error;
+    }
+    
+    if (!data.user) {
+      console.error('No se pudo iniciar sesión: data.user es null o undefined');
+      throw new Error('Non se puido iniciar sesión');
+    }
+    
+    console.log('Inicio de sesión exitoso:', { userId: data.user.id });
     
     // Obter datos do perfil dende a táboa profiles
     const { data: profileData, error: profileError } = await supabase
@@ -191,17 +204,46 @@ export const signOut = async (): Promise<void> => {
     
     console.log('Sesión activa atopada, procedendo a pechala');
     
-    // Intentamos pechar a sesión
-    const { error } = await supabase.auth.signOut();
+    // Almacenamos usuario actual para debug
+    const currentUser = sessionData.session.user;
+    console.log('Usuario que pecha sesión:', {
+      id: currentUser.id,
+      email: currentUser.email
+    });
+    
+    // Intentamos pechar a sesión en Supabase
+    const { error } = await supabase.auth.signOut({
+      scope: 'local' // Importante: pechar só a sesión local, non todas las sesións do usuario
+    });
     
     if (error) {
       console.error('Erro durante o peche de sesión:', error);
       throw error;
     }
     
-    console.log('Sesión pechada con éxito en Supabase');
+    // Limpamos calquera estado local que poidamos ter
+    if (typeof window !== 'undefined') {
+      // Limpar calquer estado específico da sesión en localStorage
+      const keysToKeep = [
+        'NEXT_PUBLIC_SUPABASE_URL', 
+        'NEXT_PUBLIC_SUPABASE_ANON_KEY'
+      ];
+      
+      // Obtener todas las claves del localStorage
+      const allKeys = Object.keys(localStorage);
+      
+      // Filtrar y eliminar solo las que no queremos manter
+      const keysToRemove = allKeys.filter(key => !keysToKeep.includes(key));
+      
+      // Eliminar las claves seleccionadas
+      keysToRemove.forEach(key => {
+        localStorage.removeItem(key);
+      });
+    }
+    
+    console.log('Sesión pechada con éxito');
   } catch (error) {
-    console.error("Erro ao pechar sesión:", error);
+    console.error('Erro durante o signOut:', error);
     throw error;
   }
 };
