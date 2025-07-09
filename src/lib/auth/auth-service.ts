@@ -128,11 +128,32 @@ export const signIn = async (
   try {
     console.log('Intentando iniciar sesión:', { email });
     
+    // Crear una promesa con timeout para evitar que se quede colgado
+    const signInWithTimeout = async (timeoutMs: number = 10000) => {
+      let timeoutId: NodeJS.Timeout;
+      
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => {
+          reject(new Error('A conexión con Supabase está tardando demasiado. Por favor, reinicie a conexión e inténteo de novo.'));
+        }, timeoutMs);
+      });
+      
+      try {
+        const result = await Promise.race([
+          supabase.auth.signInWithPassword({ email, password }),
+          timeoutPromise
+        ]) as { data: any, error: any };
+        
+        clearTimeout(timeoutId!);
+        return result;
+      } catch (error) {
+        clearTimeout(timeoutId!);
+        throw error;
+      }
+    };
+    
     // Autenticación simplificada sen verificar se o email está verificado
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
+    const { data, error } = await signInWithTimeout();
     
     if (error) {
       console.error('Error al iniciar sesión:', error);
@@ -194,54 +215,99 @@ export const signIn = async (
 export const signOut = async (): Promise<void> => {
   try {
     console.log('Iniciando signOut en auth-service');
+    
+    // Crear una promesa con timeout para evitar que se quede colgado
+    const signOutWithTimeout = async (timeoutMs: number = 5000) => {
+      let timeoutId: NodeJS.Timeout;
+      
+      const timeoutPromise = new Promise<{error: Error}>((_, reject) => {
+        timeoutId = setTimeout(() => {
+          reject({error: new Error('Timeout ao pechar sesión')});
+        }, timeoutMs);
+      });
+      
+      try {
+        // Intentar pechar sesión con un timeout para que no se quede colgado
+        const result = await Promise.race([
+          supabase.auth.signOut(),
+          timeoutPromise
+        ]) as {error: Error | null};
+        
+        clearTimeout(timeoutId!);
+        return result;
+      } catch (error) {
+        clearTimeout(timeoutId!);
+        throw error;
+      }
+    };
+    
     // Primeiro verificamos se hai unha sesión activa
     const { data: sessionData } = await supabase.auth.getSession();
     
     if (!sessionData.session) {
       console.log('Non hai sesión activa para pechar');
-      return; // Non hai sesión para pechar, simplemente regresamos
-    }
-    
-    console.log('Sesión activa atopada, procedendo a pechala');
-    
-    // Almacenamos usuario actual para debug
-    const currentUser = sessionData.session.user;
-    console.log('Usuario que pecha sesión:', {
-      id: currentUser.id,
-      email: currentUser.email
-    });
-    
-    // Intentamos pechar a sesión en Supabase
-    const { error } = await supabase.auth.signOut({
-      scope: 'local' // Importante: pechar só a sesión local, non todas las sesións do usuario
-    });
-    
-    if (error) {
-      console.error('Erro durante o peche de sesión:', error);
-      throw error;
-    }
-    
-    // Limpamos calquera estado local que poidamos ter
-    if (typeof window !== 'undefined') {
-      // Limpar calquer estado específico da sesión en localStorage
-      const keysToKeep = [
-        'NEXT_PUBLIC_SUPABASE_URL', 
-        'NEXT_PUBLIC_SUPABASE_ANON_KEY'
-      ];
+    } else {
+      console.log('Sesión activa atopada, procedendo a pechala');
       
-      // Obtener todas las claves del localStorage
-      const allKeys = Object.keys(localStorage);
-      
-      // Filtrar y eliminar solo las que no queremos manter
-      const keysToRemove = allKeys.filter(key => !keysToKeep.includes(key));
-      
-      // Eliminar las claves seleccionadas
-      keysToRemove.forEach(key => {
-        localStorage.removeItem(key);
+      // Almacenamos usuario actual para debug
+      const currentUser = sessionData.session.user;
+      console.log('Usuario que pecha sesión:', {
+        id: currentUser.id,
+        email: currentUser.email
       });
+      
+      // Intentamos pechar a sesión en Supabase con timeout
+      const { error } = await signOutWithTimeout();
+      
+      if (error) {
+        console.error('Erro durante o peche de sesión:', error);
+        console.log('Continuando con limpeza manual de estado local...');
+      } else {
+        console.log('Sesión pechada en Supabase correctamente');
+      }
     }
     
-    console.log('Sesión pechada con éxito');
+    // Limpar SEMPRE o estado local, independentemente do resultado anterior
+    if (typeof window !== 'undefined') {
+      console.log('Limpando estado local...');
+      
+      try {
+        // Eliminar todas las cookies relacionadas con la sesión
+        document.cookie.split(';').forEach(cookie => {
+          const [name] = cookie.trim().split('=');
+          if (name.includes('supabase') || name.includes('auth')) {
+            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+          }
+        });
+        
+        // Limpiar variables específicas de supabase en localStorage
+        const supabaseKeys = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && (key.includes('supabase') || key.includes('auth'))) {
+            supabaseKeys.push(key);
+          }
+        }
+        
+        supabaseKeys.forEach(key => localStorage.removeItem(key));
+        console.log(`Eliminados ${supabaseKeys.length} items relacionados con Supabase del localStorage`);
+        
+        // Preservar variables de entorno importantes
+        const keysToKeep = [
+          'NEXT_PUBLIC_SUPABASE_URL', 
+          'NEXT_PUBLIC_SUPABASE_ANON_KEY'
+        ];
+        
+        keysToKeep.forEach(key => {
+          const value = localStorage.getItem(key);
+          if (value) console.log(`Preservada variable ${key}`);
+        });
+      } catch (e) {
+        console.error('Erro ao limpar cookies/localStorage:', e);
+      }
+    }
+    
+    console.log('Proceso de signOut completado');
   } catch (error) {
     console.error('Erro durante o signOut:', error);
     throw error;

@@ -10,6 +10,7 @@ import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { signIn } from '@/lib/auth/auth-service';
+import { reinitializeSupabaseClient } from '@/lib/supabase/config';
 import Link from 'next/link';
 
 // Validación de formulario con zod
@@ -22,6 +23,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const router = useRouter();
   
   const {
@@ -90,6 +92,33 @@ export default function LoginForm() {
       setIsSubmitting(false);
     }
   };
+
+  // Función para reiniciar la conexión a Supabase
+  const handleResetConnection = async () => {
+    setIsResetting(true);
+    toast.loading('Reiniciando conexión a Supabase...', { id: 'reset' });
+    
+    try {
+      // Limpiar localStorage excepto variables de entorno
+      const keysToKeep = ['NEXT_PUBLIC_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_ANON_KEY'];
+      const allKeys = Object.keys(localStorage);
+      allKeys.forEach(key => {
+        if (!keysToKeep.includes(key)) {
+          localStorage.removeItem(key);
+        }
+      });
+      
+      // Reiniciar el cliente de Supabase
+      reinitializeSupabaseClient();
+      
+      toast.success('Conexión reiniciada con éxito', { id: 'reset' });
+    } catch (error) {
+      console.error('Error al reiniciar conexión:', error);
+      toast.error('Error al reiniciar la conexión', { id: 'reset' });
+    } finally {
+      setIsResetting(false);
+    }
+  };
   
   return (
     <Card className="max-w-md mx-auto">
@@ -128,6 +157,24 @@ export default function LoginForm() {
             Rexístrate
           </Link>
         </p>
+        
+        {/* Botón para reiniciar la conexión */}
+        <div className="mt-6 pt-4 border-t border-gray-200">
+          <p className="text-sm text-gray-600 mb-2">¿Problemas ao iniciar sesión?</p>
+          <button
+            type="button"
+            onClick={handleResetConnection}
+            disabled={isResetting}
+            className="text-sm text-blue-600 hover:underline"
+          >
+            {isResetting ? 'Reiniciando conexión...' : 'Reiniciar conexión a Supabase'}
+          </button>
+          <div className="mt-2">
+            <Link href="/debug" className="text-sm text-gray-500 hover:underline">
+              Ver diagnóstico de conexión
+            </Link>
+          </div>
+        </div>
       </div>
     </Card>
   );

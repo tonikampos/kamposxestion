@@ -12,6 +12,36 @@ const isValidValue = (value: string | null | undefined): boolean => {
   return Boolean(value && !value.includes('{{') && !value.includes('}}') && value !== 'placeholder-for-static-export');
 };
 
+// Función para reiniciar el cliente de Supabase
+export const reinitializeSupabaseClient = (): void => {
+  if (typeof window === 'undefined') {
+    console.log('⚠️ reinitializeSupabaseClient só pode ser chamado no cliente');
+    return;
+  }
+  
+  console.log('🔄 Reiniciando cliente de Supabase...');
+  
+  try {
+    // Limpar a sesión actual
+    localStorage.removeItem('supabase.auth.token');
+    
+    // Reiniciar o cliente
+    _supabase = null;
+    
+    // Intentar inicializar de novo
+    const client = supabase;
+    console.log('✅ Cliente de Supabase reiniciado correctamente');
+    
+    // Comprobar conexión
+    client.from('profiles').select('count', { count: 'exact', head: true })
+      .then(() => console.log('✅ Conexión con Supabase verificada despois de reiniciar'))
+      .catch((err: any) => console.error('❌ Error ao verificar conexión despois de reiniciar:', err));
+      
+  } catch (error) {
+    console.error('❌ Error ao reiniciar o cliente de Supabase:', error);
+  }
+};
+
 // Función mejorada para obtener variables de entorno
 // Prueba todas las fuentes posibles y utiliza valores hardcodeados como último recurso
 const getEnvVariable = (name: string): string => {

@@ -28,6 +28,15 @@ Para configurar Supabase como base de datos e sistema de autenticación, segue a
 
 O sistema de autenticación foi simplificado para non depender do envío de emails, evitando así problemas con emails rebotados. Os usuarios poden iniciar sesión inmediatamente despois de rexistrarse sen necesidade de verificar o seu correo electrónico. Para máis información, consulta [AUTH_SIMPLIFICATION.md](./docs/AUTH_SIMPLIFICATION.md).
 
+### Ferramentas de Diagnóstico
+
+Incluímos ferramentas especiais para diagnosticar e resolver problemas de conexión e autenticación con Supabase:
+
+- **Botón de reinicio de conexión**: Na páxina de login, permite reiniciar a conexión con Supabase.
+- **Páxina de diagnóstico**: Accesible en `/debug`, permite ver o estado da conexión, variables de entorno e ofrece opcións para resolver problemas.
+
+Se tes problemas co inicio de sesión ou rexistro, consulta a guía [AUTH_TROUBLESHOOTING.md](./docs/AUTH_TROUBLESHOOTING.md).
+
 ## Despregamento en Netlify
 
 Este proxecto está configurado para ser despregado facilmente en Netlify:
