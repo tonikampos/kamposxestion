@@ -1,11 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/supabase/config';
 
+// Configuración para exportación estática
+export const dynamic = "force-static";
+
 /**
  * API para verificar el estado de autenticación
  * Útil para diagnosticar problemas de sesión
  */
 export async function GET(request: NextRequest) {
+  // Durante la exportación estática, devolver una respuesta genérica
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
+    return NextResponse.json({
+      message: 'Esta API solo está disponible en tiempo de ejecución'
+    });
+  }
+
   // Usar el cliente de Supabase con clave de servicio
   const supabase = getServiceSupabase();
 

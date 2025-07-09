@@ -1,11 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/supabase/config';
 
+// Configuración para exportación estática
+export const dynamic = "force-static";
+
 /**
  * API para verificar si se han aplicado las configuraciones SQL necesarias
  * para la desactivación de emails en Supabase
  */
 export async function GET(request: NextRequest) {
+  // Durante la exportación estática, devolver una respuesta genérica
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
+    return NextResponse.json({
+      message: 'Esta API solo está disponible en tiempo de ejecución'
+    });
+  }
+  
   try {
     // Este endpoint solo debería ser accesible en ambiente de desarrollo
     if (process.env.NODE_ENV === 'production') {

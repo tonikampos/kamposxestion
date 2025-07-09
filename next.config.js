@@ -14,7 +14,12 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   // Configuración para Next.js App Router
-  trailingSlash: true
+  trailingSlash: true,
+  
+  // Excluir rutas API de la exportación estática
+  experimental: {
+    excludeDefaultMomentLocales: true,
+  },
 };
 
 module.exports = nextConfig;

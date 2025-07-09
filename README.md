@@ -54,10 +54,12 @@ Este proxecto está configurado para ser despregado facilmente en Netlify:
 3. Selecciona o repositorio `kamposxestion`
 4. Configura o seguinte:
    - Build command: `npm run build`
-   - Publish directory: `.next`
+   - Publish directory: `out`
 5. Configura as variables de entorno:
    - `NEXT_PUBLIC_SUPABASE_URL`: A URL da túa instancia Supabase
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: A clave anónima da túa instancia Supabase
+
+> **Nota importante:** Este proxecto utiliza exportación estática para Netlify, o que significa que as APIs non están dispoñibles durante a compilación. Para máis información, consulta [API_STATIC_EXPORT.md](./docs/API_STATIC_EXPORT.md).
    - `NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY`: A clave de servizo da túa instancia Supabase
 6. Fai clic en "Deploy site"
 

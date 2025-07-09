@@ -29,31 +29,45 @@ export default function DebugPage() {
       setSqlConfigState('checking');
       setDebugInfo(prev => prev + '\n\n[INFO] Verificando configuración SQL para emails...');
       
-      const response = await fetch('/api/auth/check-sql', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        if (result.configurationApplied) {
-          setSqlConfigState('configured');
-          setDebugInfo(prev => prev + '\n[OK] La configuración SQL para desactivar emails está correctamente aplicada');
-        } else {
-          setSqlConfigState('not-configured');
-          setDebugInfo(prev => prev + '\n[ALERTA] La configuración SQL para desactivar emails NO está aplicada correctamente');
-          setDebugInfo(prev => prev + '\n[INFO] Debes ejecutar el script SQL en el dashboard de Supabase');
-        }
-      } else {
-        setSqlConfigState('error');
-        setDebugInfo(prev => prev + `\n[ERROR] No se pudo verificar la configuración SQL: ${result.message || 'Error desconocido'}`);
+      try {
+        const response = await fetch('/api/auth/check-sql', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
         
-        if (result.isProduction) {
-          setDebugInfo(prev => prev + '\n[INFO] Esta verificación no está disponible en producción por seguridad');
+        const result = await response.json();
+        
+        // Comprobar si es la respuesta de exportación estática
+        if (result.message && result.message.includes('solo está disponible en tiempo de ejecución')) {
+          setSqlConfigState('error');
+          setDebugInfo(prev => prev + '\n[INFO] La verificación SQL no está disponible durante la compilación estática');
+          return;
         }
+        
+        if (result.success) {
+          if (result.configurationApplied) {
+            setSqlConfigState('configured');
+            setDebugInfo(prev => prev + '\n[OK] La configuración SQL para desactivar emails está correctamente aplicada');
+          } else {
+            setSqlConfigState('not-configured');
+            setDebugInfo(prev => prev + '\n[ALERTA] La configuración SQL para desactivar emails NO está aplicada correctamente');
+            setDebugInfo(prev => prev + '\n[INFO] Debes ejecutar el script SQL en el dashboard de Supabase');
+          }
+        } else {
+          setSqlConfigState('error');
+          setDebugInfo(prev => prev + `\n[ERROR] No se pudo verificar la configuración SQL: ${result.message || 'Error desconocido'}`);
+          
+          if (result.isProduction) {
+            setDebugInfo(prev => prev + '\n[INFO] Esta verificación no está disponible en producción por seguridad');
+          }
+        }
+      } catch (fetchError) {
+        // Error de red al intentar acceder al endpoint
+        console.error('Error al acceder al endpoint de verificación SQL:', fetchError);
+        setSqlConfigState('error');
+        setDebugInfo(prev => prev + '\n[ERROR] No se pudo acceder al endpoint de verificación SQL. Esto es normal en la compilación estática.');
       }
     } catch (error) {
       console.error('Error al verificar configuración SQL:', error);

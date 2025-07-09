@@ -97,15 +97,19 @@ export default function RegisterForm() {
         updateToast('Verificando sesión...');
         
         // Verificar si tenemos sesión activa
-        const { data: sessionCheck } = await fetch('/api/auth/check', { 
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' }
-        }).then(res => res.json()).catch(() => ({ data: null }));
-        
-        if (sessionCheck?.authenticated) {
-          console.log('Sesión verificada correctamente');
-        } else {
-          console.warn('No se pudo verificar la sesión después del registro');
+        try {
+          const { data: sessionCheck } = await fetch('/api/auth/check', { 
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+          }).then(res => res.json()).catch(() => ({ data: null }));
+          
+          if (sessionCheck?.authenticated) {
+            console.log('Sesión verificada correctamente');
+          } else {
+            console.warn('No se pudo verificar la sesión después del registro');
+          }
+        } catch (sessionCheckError) {
+          console.warn('Error al verificar la sesión, continuando de todos modos:', sessionCheckError);
         }
         
         toast.success('Rexistro completado con éxito!', { id: toastId });
