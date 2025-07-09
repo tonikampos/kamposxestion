@@ -166,21 +166,23 @@ export const supabase = (() => {
 
 // Función para obter o cliente de Supabase coa clave de servizo (só para uso en servidor)
 export const getServiceSupabase = () => {
+  // En el entorno de Netlify, los usuarios normales no deberían poder crear otros usuarios
+  // Vamos a intentar simplificar el registro usando signUp normal en lugar de admin.createUser
+  if (typeof window !== 'undefined') {
+    console.log('⚠️ Solicitando cliente de servicio desde el navegador. Esto no es ideal, pero intentaremos hacerlo funcionar...');
+    
+    // En Netlify, para simplificar, usaremos el método de registro normal en lugar de admin
+    return supabase;
+  }
+  
+  // Este código solo debería ejecutarse en un entorno de servidor real
   const serviceRoleKey = getEnvVariable('NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY');
   
   // Validar la clave de servicio
   if (!isValidValue(serviceRoleKey) || serviceRoleKey.length < 20) {
     console.error('❌ Clave de servizo de Supabase inválida ou non configurada');
     console.error('Por favor, asegúrate de configurar NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY en Netlify');
-    
-    // En entorno de producción, mostrar un error más claro
-    if (typeof window !== 'undefined') {
-      alert('Error de configuración: A clave de servizo de Supabase non está configurada correctamente en Netlify. Os usuarios non poderán rexistrarse.');
-    }
-    
-    // Devolver un cliente con la clave anónima como fallback
-    // Esto permitirá algunas operaciones básicas pero no administrativas
-    return createClient(supabaseUrl, supabaseAnonKey);
+    return supabase; // Usar el cliente normal como fallback
   }
   
   // Nota: Este cliente só debe usarse no servidor en tempo de execución, non durante a exportación

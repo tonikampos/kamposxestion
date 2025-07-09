@@ -47,30 +47,59 @@ export default function RegisterForm() {
     setIsSubmitting(true);
     
     try {
+      // Verificamos primero si tenemos las variables de entorno necesarias
+      const envVars = {
+        url: localStorage.getItem('NEXT_PUBLIC_SUPABASE_URL'),
+        key: localStorage.getItem('NEXT_PUBLIC_SUPABASE_ANON_KEY')
+      };
+      
+      if (!envVars.url || !envVars.key) {
+        console.error('Faltan variables de entorno esenciales:', { 
+          url_missing: !envVars.url,
+          key_missing: !envVars.key
+        });
+        toast.error('Error de configuración: Faltan variables de Supabase en Netlify');
+        return;
+      }
+      
       console.log('Iniciando rexistro desde formulario:', {
         email: data.email,
-        full_name: data.full_name
+        full_name: data.full_name,
+        env_ok: true
       });
+      
+      toast.loading('Procesando rexistro...', { id: 'register' });
       
       const result = await registerUser(data.email, data.password, data.full_name);
       console.log('Resultado de rexistro:', result);
       
-      toast.success('Rexistro completado con éxito!');
+      toast.success('Rexistro completado con éxito!', { id: 'register' });
       router.push('/dashboard');
     } catch (error: Error | unknown) {
       console.error('Erro no rexistro:', error);
       
-      // Mostrar detalles más específicos del error
+      // Mensajes de error más claros para el usuario
       if (error instanceof Error) {
-        toast.error(`Erro: ${error.message}`);
+        if (error.message.includes('Invalid API key')) {
+          toast.error('Non se pode rexistrar: A clave API de Supabase non é válida. Por favor contacta ao administrador.', { id: 'register' });
+        } else if (error.message.includes('User already registered')) {
+          toast.error('Este correo electrónico xa está rexistrado. Por favor inicia sesión.', { id: 'register' });
+        } else {
+          toast.error(`Erro: ${error.message}`, { id: 'register' });
+        }
       } else if (typeof error === 'object' && error !== null && 'code' in error) {
-        const customError = error as { code: string, details?: string };
-        toast.error(`Erro (${customError.code}): ${customError.details || 'Revisa a consola para máis detalles'}`);
+        const customError = error as { code: string, details?: string, message?: string };
+        
+        if (customError.code === '23505') { // Error de duplicado en PostgreSQL
+          toast.error('Este correo electrónico xa está rexistrado. Por favor inicia sesión.', { id: 'register' });
+        } else {
+          toast.error(`Erro (${customError.code}): ${customError.message || customError.details || 'Erro no servidor'}`, { id: 'register' });
+        }
       } else {
-        toast.error('Erro descoñecido ao rexistrarse');
+        toast.error('Erro descoñecido ao rexistrarse. Por favor, inténtao de novo máis tarde.', { id: 'register' });
       }
       
-      // Intentar mostrar más información de depuración
+      // Mostrar información de depuración en la consola
       console.error('Detalles completos do erro:', JSON.stringify(error, null, 2));
     } finally {
       setIsSubmitting(false);

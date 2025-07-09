@@ -23,32 +23,26 @@ export const registerUser = async (
     const envVars = {
       url: typeof window !== 'undefined' ? localStorage.getItem('NEXT_PUBLIC_SUPABASE_URL') : null,
       key: typeof window !== 'undefined' ? localStorage.getItem('NEXT_PUBLIC_SUPABASE_ANON_KEY') : null,
-      serviceKey: typeof window !== 'undefined' ? localStorage.getItem('NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY') : null,
     };
     
     console.log('Variables disponibles para registro:', {
       url_available: Boolean(envVars.url),
-      key_available: Boolean(envVars.key),
-      serviceKey_available: Boolean(envVars.serviceKey)
+      key_available: Boolean(envVars.key)
     });
     
-    // Usamos o cliente con rol de servizo para todo o proceso
-    const serviceClient = getServiceSupabase();
+    // En un entorno estático como Netlify, usaremos el método signUp regular
+    // en lugar de admin.createUser que requiere la clave de servicio
     
-    // Verificamos si el cliente tiene la función admin.createUser
-    if (!serviceClient.auth.admin || typeof serviceClient.auth.admin.createUser !== 'function') {
-      throw new Error('O cliente de Supabase non ten permisos de administrador. Comproba que a variable NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY estea configurada correctamente en Netlify.');
-    }
-    
-    // Paso 1: Crear o usuario en Auth
-    console.log('Intentando crear usuario con admin.createUser...');
-    const { data: authData, error: authError } = await serviceClient.auth.admin.createUser({
+    // Paso 1: Crear o usuario con signUp normal
+    console.log('Intentando crear usuario con signUp...');
+    const { data: authData, error: authError } = await supabase.auth.signUp({
       email: email,
       password: password,
-      email_confirm: true, // Confirmar email automaticamente
-      user_metadata: {
-        full_name: fullName,
-        role: 'profesor'
+      options: {
+        data: {
+          full_name: fullName,
+          role: 'profesor'
+        }
       }
     });
 
@@ -71,7 +65,7 @@ export const registerUser = async (
       full_name: fullName
     });
     
-    const { error: profileError } = await serviceClient
+    const { error: profileError } = await supabase
       .from('profiles')
       .insert({
         id: authData.user.id, 
@@ -85,6 +79,19 @@ export const registerUser = async (
       // Continuamos aínda que falle a creación do perfil
     } else {
       console.log('Perfil creado con éxito');
+    }
+    
+    // Iniciar sesión automáticamente con el nuevo usuario
+    console.log('Iniciando sesión automáticamente con el nuevo usuario...');
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+    
+    if (signInError) {
+      console.warn('Non se puido iniciar sesión automáticamente tras o rexistro:', signInError);
+    } else {
+      console.log('Sesión iniciada automáticamente tras o rexistro');
     }
     
     // Construír e devolver os datos do usuario

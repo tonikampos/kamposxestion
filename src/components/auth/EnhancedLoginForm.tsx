@@ -31,26 +31,61 @@ export default function EnhancedLoginForm() {
   useEffect(() => {
     const checkSupabase = async () => {
       try {
-        // Intenta hacer una operación simple para ver si Supabase está configurado
-        await supabase.from('profiles').select('count', { count: 'exact', head: true });
-        setSupabaseReady(true);
-        console.log('Conexión a Supabase establecida correctamente');
-        setError(null);
-      } catch (err) {
-        console.error('Error al conectar con Supabase:', err);
-        setError('Error de conexión con la base de datos. Por favor, inténtalo más tarde.');
-        
-        // Mostrar información sobre las variables de entorno para depuración
+        // Comprobar si tenemos las variables en localStorage
         const url = localStorage.getItem('NEXT_PUBLIC_SUPABASE_URL');
         const key = localStorage.getItem('NEXT_PUBLIC_SUPABASE_ANON_KEY');
+        
         console.log('Variables de entorno disponibles:',
           'URL=' + (url ? url.substring(0, 15) + '...' : 'non definida'),
           'KEY=' + (key ? 'definida (' + key.length + ' caracteres)' : 'non definida')
         );
+        
+        // Si tenemos las variables básicas, consideramos que Supabase está listo
+        if (url && key && url.startsWith('https://') && key.length > 20) {
+          setSupabaseReady(true);
+          setError(null);
+          console.log('Variables de Supabase detectadas correctamente');
+          return;
+        }
+        
+        // Intentamos obtener las variables de window.ENV si están disponibles
+        if (window.ENV && window.ENV.NEXT_PUBLIC_SUPABASE_URL && window.ENV.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+          localStorage.setItem('NEXT_PUBLIC_SUPABASE_URL', window.ENV.NEXT_PUBLIC_SUPABASE_URL);
+          localStorage.setItem('NEXT_PUBLIC_SUPABASE_ANON_KEY', window.ENV.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+          setSupabaseReady(true);
+          setError(null);
+          console.log('Variables de Supabase cargadas desde window.ENV');
+          return;
+        }
+        
+        // Como último recurso, intentamos una operación simple
+        try {
+          await supabase.from('profiles').select('count', { count: 'exact', head: true });
+          setSupabaseReady(true);
+          console.log('Conexión a Supabase verificada correctamente');
+          setError(null);
+        } catch (connErr) {
+          console.error('Error al conectar con Supabase:', connErr);
+          setError('Erro de conexión coa base de datos. Por favor, verifica a configuración.');
+          setSupabaseReady(false);
+        }
+      } catch (err) {
+        console.error('Error general al verificar Supabase:', err);
+        setError('Non se puido verificar a conexión coa base de datos.');
       }
     };
 
     checkSupabase();
+    
+    // Establecer un timeout para evitar que el usuario se quede bloqueado
+    const timer = setTimeout(() => {
+      if (!supabaseReady) {
+        setSupabaseReady(true); // Permitir intentar el login aunque no estemos 100% seguros
+        console.log('Timeout alcanzado, permitiendo intento de login');
+      }
+    }, 3000);
+    
+    return () => clearTimeout(timer);
   }, []);
   
   const {
@@ -62,18 +97,49 @@ export default function EnhancedLoginForm() {
   });
   
   const onSubmit = async (data: LoginFormValues) => {
+    // Incluso si supabaseReady es false, intentaremos iniciar sesión
+    // pero mostramos una advertencia
     if (!supabaseReady) {
-      toast.error('Non se puido conectar coa base de datos');
-      return;
+      console.warn('Intentando iniciar sesión aunque la conexión a Supabase no está confirmada');
     }
 
     setIsSubmitting(true);
     setError(null);
     
     try {
-      console.log('Iniciando sesión...');
-      await signIn(data.email, data.password);
-      toast.success('Sesión iniciada correctamente');
+      // Verificamos las variables de entorno necesarias
+      const url = localStorage.getItem('NEXT_PUBLIC_SUPABASE_URL');
+      const key = localStorage.getItem('NEXT_PUBLIC_SUPABASE_ANON_KEY');
+      
+      if (!url || !key) {
+        // Intentar cargar desde window.ENV como último recurso
+        if (window.ENV && window.ENV.NEXT_PUBLIC_SUPABASE_URL && window.ENV.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+          localStorage.setItem('NEXT_PUBLIC_SUPABASE_URL', window.ENV.NEXT_PUBLIC_SUPABASE_URL);
+          localStorage.setItem('NEXT_PUBLIC_SUPABASE_ANON_KEY', window.ENV.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+          console.log('Variables cargadas desde window.ENV antes de iniciar sesión');
+        } else {
+          throw new Error('Faltan variables de configuración necesarias para iniciar sesión');
+        }
+      }
+      
+      toast.loading('Iniciando sesión...', { id: 'login' });
+      console.log('Iniciando sesión para:', data.email);
+      
+      // Usar directamente supabase en lugar de la función signIn para más control
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password
+      });
+      
+      if (authError) {
+        throw authError;
+      }
+      
+      if (!authData.user) {
+        throw new Error('Non se puido iniciar sesión: usuario non atopado');
+      }
+      
+      toast.success('Sesión iniciada correctamente', { id: 'login' });
       
       // Esperar un momento antes de redirigir
       setTimeout(() => {
@@ -89,10 +155,12 @@ export default function EnhancedLoginForm() {
           errorMessage = 'Credenciais incorrectos. Comproba o teu correo e contrasinal.';
         } else if (error.message.includes('network')) {
           errorMessage = 'Erro de conexión. Comproba a túa conexión a Internet.';
+        } else if (error.message.includes('variables')) {
+          errorMessage = 'Erro de configuración. Contacta ao administrador.';
         }
       }
       
-      toast.error(errorMessage);
+      toast.error(errorMessage, { id: 'login' });
       setError(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -112,7 +180,7 @@ export default function EnhancedLoginForm() {
 
         {!supabaseReady && (
           <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded mb-4" role="alert">
-            <p>Estableciendo conexión co servidor...</p>
+            <p>Estableciendo conexión co servidor... (Podes intentar iniciar sesión igualmente)</p>
           </div>
         )}
         
@@ -141,7 +209,7 @@ export default function EnhancedLoginForm() {
             <Button
               type="submit"
               className="w-full"
-              disabled={isSubmitting || !supabaseReady}
+              disabled={isSubmitting}
             >
               {isSubmitting ? 'Iniciando sesión...' : 'Iniciar sesión'}
             </Button>
